@@ -17,6 +17,7 @@ main:
 
 func:
     #new
+    beq a4,x0,tag0
     li t0, 0 #i
     li a1, 0 #ans
     loop0:
@@ -53,4 +54,9 @@ func:
 if:
     addi a1, t2, 0 #if a1>t2,update a1s
     j lab #jump to lab to continue
+tag0:
+    beq a5,x0,tag1
+    jr ra #return
+tag1:
+    jr ra #return 
 #new
