@@ -8,6 +8,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
+const int thread_num = 4;
+struct arguments_for_pthread
+{
+    int image_width;
+    int image_height;
+    int samples_per_pixel;
+    vec3 *image;
+    ray camera;
+    vec3 cx;
+    vec3 cy;
+    int pieces;
+    /*
+    int i;
+    int y;
+    int x;
+    int sy;
+    int sx;
+    int s;
+    int i = X->i;int x = X->x;int y = X->y;int sx = X->sx;int sy = X->sy;int s = X->s;*/
+};
+
 
 /**
  * @brief You never need to read this function.
@@ -114,31 +136,18 @@ vec3 radiance(const ray r, int depth, unsigned short *xi) {
 }
 
 
-
-/**
- * @brief You never need to understand the ray tracing algorithm, 
- *        but you can still make it parallel by using pthread.
- * 
- * @details Given the image settings, camera settings and scene settings, 
- *          trace rays from camera into the scene and output an amazing image of the scene.
- */
-int main(int argc, char *argv[]) {
-    /* Image settings */
-    int image_width = 1024;
-    int image_height = 768;
-    int samples_per_pixel = argc == 2 ? atoi(argv[1]) / 4 : 1;
-    vec3 *image = malloc(sizeof(vec3) * image_width * image_height);
-
-    /* Camera settings */
-    ray camera = ray_init(vec3_init(50, 52, 295.6), vec3_unit(vec3_init(0, -0.042612, -1)));
-    vec3 cx = vec3_init(image_width * .5135 / image_height, 0, 0);
-    vec3 cy = vec3_mulf(vec3_unit(vec3_cross(cx, camera.d)), .5135);
-
-    /* Ray tracing */
-    int i;
-    int y, x, sy, sx, s;
-    memset(image, 0, sizeof(vec3) * image_width * image_height);
-    for (y = 0; y < image_height; ++y) {
+void* fun(void* arg){
+    struct arguments_for_pthread *X = (struct arguments_for_pthread *) arg;
+    ray camera = X->camera;int image_width = X->image_width;
+    int image_height = X->image_height;int samples_per_pixel = X->samples_per_pixel;
+    vec3* image = X->image;vec3 cx = X->cx;vec3 cy = X->cy;
+    int pic = X->pieces;
+    int i,x,y,sx,sy,s;
+    int m = (int)floor(image_height/thread_num*pic);
+    int n = (int)floor(image_height/thread_num*(pic+1));
+    if (pic == thread_num-1) n = image_height;
+    if (pic == 0) m = 0;
+    for (y = m; y < n; ++y) {
         unsigned short xi[3] = { 0, 0 }; 
         xi[2] = y * y * y;
         for (x = 0; x < image_width; ++x) {
@@ -161,10 +170,45 @@ int main(int argc, char *argv[]) {
             }
         }
     }
+    return NULL;
+}
 
+
+/**
+ * @brief You never need to understand the ray tracing algorithm, 
+ *        but you can still make it parallel by using pthread.
+ * 
+ * @details Given the image settings, camera settings and scene settings, 
+ *          trace rays from camera into the scene and output an amazing image of the scene.
+ */
+int main(int argc, char *argv[]) {
+    struct arguments_for_pthread X;
+    /* Image settings */
+    int image_width = 1024;
+    int image_height = 768;
+    int samples_per_pixel = argc == 2 ? atoi(argv[1]) / 4 : 1;
+    vec3 *image = malloc(sizeof(vec3) * image_width * image_height);
+
+    /* Camera settings */
+    ray camera = ray_init(vec3_init(50, 52, 295.6), vec3_unit(vec3_init(0, -0.042612, -1)));
+    vec3 cx = vec3_init(image_width * .5135 / image_height, 0, 0);
+    vec3 cy = vec3_mulf(vec3_unit(vec3_cross(cx, camera.d)), .5135);
+    int q;
+    /* Ray tracing 
+    int i;
+    int y, x, sy, sx, s;*/
+    pthread_t *threads = (pthread_t *)malloc(sizeof(pthread_t)*4);
+    memset(image, 0, sizeof(vec3) * image_width * image_height);
+
+    X.camera = camera;X.image_width = image_width;
+    X.image_height = image_height;X.samples_per_pixel = samples_per_pixel;
+    X.image = image;X.cx = cx;X.cy = cy;
+    /* X.i = i;X.x = x;X.y = y;X.sx = sx;X.sy = sy;X.s = s;*/
+    for (q = 0;q<thread_num;q++) {X.pieces = q;pthread_create(&threads[q],NULL,fun,&X);}
+    for (q = 0;q<thread_num;q++) pthread_join(threads[q], NULL);
     /* Write the image from memory to image.ppm */
     write_image("image.ppm", image, image_width, image_height);
     free(image);
-
+    free(threads);
     return 0;
 }
