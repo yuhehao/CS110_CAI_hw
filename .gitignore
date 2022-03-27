@@ -52,3 +52,5 @@ Mkfile.old
 dkms.conf
 build/
 .vscode/
+hw5/image.ppm
+hw5/hw5
