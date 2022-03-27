@@ -143,11 +143,7 @@ void* fun(void* arg){
     vec3* image = X->image;vec3 cx = X->cx;vec3 cy = X->cy;
     int pic = X->pieces;
     int i,x,y,sx,sy,s;
-    int m = (int)floor(image_height/thread_num*pic);
-    int n = (int)floor(image_height/thread_num*(pic+1));
-    if (pic == thread_num-1) n = image_height;
-    if (pic == 0) m = 0;
-    for (y = m; y < n; ++y) {
+    for (y = pic; y < image_height; y += 4) {
         unsigned short xi[3] = { 0, 0 }; 
         xi[2] = y * y * y;
         for (x = 0; x < image_width; ++x) {
@@ -182,7 +178,7 @@ void* fun(void* arg){
  *          trace rays from camera into the scene and output an amazing image of the scene.
  */
 int main(int argc, char *argv[]) {
-    struct arguments_for_pthread X;
+    struct arguments_for_pthread X[4];
     /* Image settings */
     int image_width = 1024;
     int image_height = 768;
@@ -193,18 +189,18 @@ int main(int argc, char *argv[]) {
     ray camera = ray_init(vec3_init(50, 52, 295.6), vec3_unit(vec3_init(0, -0.042612, -1)));
     vec3 cx = vec3_init(image_width * .5135 / image_height, 0, 0);
     vec3 cy = vec3_mulf(vec3_unit(vec3_cross(cx, camera.d)), .5135);
-    int q;
+    int q,p;
     /* Ray tracing 
     int i;
     int y, x, sy, sx, s;*/
     pthread_t *threads = (pthread_t *)malloc(sizeof(pthread_t)*4);
     memset(image, 0, sizeof(vec3) * image_width * image_height);
-
-    X.camera = camera;X.image_width = image_width;
-    X.image_height = image_height;X.samples_per_pixel = samples_per_pixel;
-    X.image = image;X.cx = cx;X.cy = cy;
-    /* X.i = i;X.x = x;X.y = y;X.sx = sx;X.sy = sy;X.s = s;*/
-    for (q = 0;q<thread_num;q++) {X.pieces = q;pthread_create(&threads[q],NULL,fun,&X);}
+    for(p=0;p<thread_num;p++)
+    {X[p].camera = camera;X[p].image_width = image_width;
+    X[p].image_height = image_height;X[p].samples_per_pixel = samples_per_pixel;
+    X[p].image = image;X[p].cx = cx;X[p].cy = cy;X[p].pieces = p;}
+    /* X[p].i = i;X[p].x = x;X[p].y = y;X[p].sx = sx;X[p].sy = sy;X[p].s = s;*/
+    for (q = 0;q<thread_num;q++) {pthread_create(&threads[q],NULL,fun,&X[q]);}
     for (q = 0;q<thread_num;q++) pthread_join(threads[q], NULL);
     /* Write the image from memory to image.ppm */
     write_image("image.ppm", image, image_width, image_height);
