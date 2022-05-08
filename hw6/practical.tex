@@ -64,6 +64,15 @@ cache utilization and access locality? Justify your modification.
 {
     \begin{solution}
         \vspace{1in}
+        \begin{minted}{c}
+            struct log_entry {
+                int status; /* HTTP response status code. (e.g. 404) */
+                long reference_time; /* The time user referenced to our website. */
+                int src_ip;    /* Remote IP address */
+                char browser[64]; /* Client browser name */
+                char URL[128]; /* Request URL. You can consider 128 characters are enough. */
+            } log[NUM_ENTRIES];
+        \end{minted}
     \end{solution}
 }
 
@@ -86,7 +95,13 @@ Your answer shall include:
 {
     \begin{solution}
         %%%%%%%%%%%%%% YOUR ANSWER HERE %%%%%%%%%%%%%%%%%%%%%%%%%
-
+        \begin{minted}{c}
+            struct log_entry {
+                int status; /* HTTP response status code. (e.g. 404) */
+                int src_ip;    /* Remote IP address */
+                long reference_time; /* The time user referenced to our website. */
+            } log[NUM_ENTRIES];
+        \end{minted}
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         \vspace{4in}
     \end{solution}
