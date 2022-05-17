@@ -6,6 +6,8 @@ SRC_FILES = main.cpp
 all: ${INC_FILES} ${SRC_FILES}
 	${CC} ${CFLAGS} -o main ${SRC_FILES}
 
+handin:
+	rm -f hw7.tar && tar cvf hw7.tar ringbuffer.ipp
 clean:
 	rm -f main
 

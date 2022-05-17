@@ -31,8 +31,9 @@ int main()
     std::cout << empty << std::endl;*/
 
     // int flag = 0;
-    for (__iterator<int> i = buffer.begin(); i != buffer.end(); i ++)
+    // for (__iterator<int> i = buffer.begin(); i != buffer.end(); i ++)
+    for (__detail::__const_iterator<int> iter = buffer.cbegin(); iter != buffer.cend(); ++iter) 
     {
-        std::cout << *i << "\n";
+        std::cout << *iter << "\n";
     }
 }
